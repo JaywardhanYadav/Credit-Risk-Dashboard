@@ -1,0 +1,105 @@
+stages:
+  raw_ingestion:
+    cmd: python -m engine.stages.stage_raw_ingestion
+    deps:
+      - engine/stages/stage_raw_ingestion.py
+      - params.yaml
+    outs:
+      - artifacts_cache/raw/application_train.csv
+      - artifacts_cache/raw/bureau.csv
+      - artifacts_cache/raw/bureau_balance.csv
+      - artifacts_cache/raw/previous_application.csv
+      - artifacts_cache/raw/installments_payments.csv
+      - artifacts_cache/raw/credit_card_balance.csv
+      - artifacts_cache/raw/POS_CASH_balance.csv
+
+  schema_validation:
+    cmd: python -m engine.stages.stage_schema_validation
+    deps:
+      - engine/stages/stage_schema_validation.py
+      - params.yaml
+      - artifacts_cache/raw/application_train.csv
+    outs:
+      - artifacts_cache/validation/schema_status.yaml
+
+  feature_engineering:
+    cmd: python -m engine.stages.stage_feature_engineering
+    deps:
+      - engine/stages/stage_feature_engineering.py
+      - params.yaml
+      - artifacts_cache/raw/application_train.csv
+    outs:
+      - artifacts_cache/engineered/engineered_features.parquet
+
+  quality_filtration:
+    cmd: python -m engine.stages.stage_quality_filtration
+    deps:
+      - engine/stages/stage_quality_filtration.py
+      - params.yaml
+      - artifacts_cache/engineered/engineered_features.parquet
+    outs:
+      - artifacts_cache/filtered/filtered_features.parquet
+      - artifacts_cache/filtered/quality_report.json
+
+  woe_mapping:
+    cmd: python -m engine.stages.stage_woe_mapping
+    deps:
+      - engine/stages/stage_woe_mapping.py
+      - params.yaml
+      - artifacts_cache/filtered/filtered_features.parquet
+    outs:
+      - artifacts_cache/woe/train_woe.parquet
+      - artifacts_cache/woe/test_woe.parquet
+      - artifacts_cache/woe/woe_bin_maps.pkl
+      - artifacts_cache/woe/test_raw.parquet
+      - artifacts_cache/woe/iv_report.json
+
+  bin_optimization:
+    cmd: python -m engine.stages.stage_bin_optimization
+    deps:
+      - engine/stages/stage_bin_optimization.py
+      - params.yaml
+      - artifacts_cache/woe/train_woe.parquet
+      - artifacts_cache/woe/test_woe.parquet
+      - artifacts_cache/woe/iv_report.json
+    outs:
+      - artifacts_cache/optimized/train_opt.parquet
+      - artifacts_cache/optimized/test_opt.parquet
+      - artifacts_cache/optimized/selected_features.pkl
+      - artifacts_cache/optimized/optimization_report.json
+
+  estimator_training:
+    cmd: python -m engine.stages.stage_estimator_training
+    deps:
+      - engine/stages/stage_estimator_training.py
+      - params.yaml
+      - artifacts_cache/optimized/train_opt.parquet
+      - artifacts_cache/optimized/test_opt.parquet
+    outs:
+      - artifacts_cache/model/logistic_regression_model.pkl
+      - artifacts_cache/model/calibrated_model.pkl
+      - artifacts_cache/model/feature_importance.csv
+
+  performance_evaluation:
+    cmd: python -m engine.stages.stage_performance_evaluation
+    deps:
+      - engine/stages/stage_performance_evaluation.py
+      - params.yaml
+      - artifacts_cache/optimized/train_opt.parquet
+      - artifacts_cache/optimized/test_opt.parquet
+      - artifacts_cache/model/calibrated_model.pkl
+    outs:
+      - artifacts_cache/evaluation/metrics.json
+
+  scorecard_scaling:
+    cmd: python -m engine.stages.stage_scorecard_scaling
+    deps:
+      - engine/stages/stage_scorecard_scaling.py
+      - params.yaml
+      - artifacts_cache/woe/woe_bin_maps.pkl
+      - artifacts_cache/optimized/selected_features.pkl
+      - artifacts_cache/model/logistic_regression_model.pkl
+    outs:
+      - api/assets/numerical_points_map.pkl
+      - api/assets/categorical_points_map.pkl
+      - api/assets/scaling_metadata.json

@@ -1,0 +1,278 @@
+schema: '2.0'
+stages:
+  raw_ingestion:
+    cmd: python -m engine.stages.stage_raw_ingestion
+    deps:
+    - path: engine/stages/stage_raw_ingestion.py
+      hash: md5
+      md5: c19ec005705c9950bb7437e7cdb40756
+      size: 5318
+    - path: params.yaml
+      hash: md5
+      md5: 0fa77185bd606bab4ff57fbab9ca3f1d
+      size: 1279
+    outs:
+    - path: artifacts_cache/raw/POS_CASH_balance.csv
+      hash: md5
+      md5: 209ae518f83d120c4adc89f604de6a06
+      size: 34475751
+    - path: artifacts_cache/raw/application_train.csv
+      hash: md5
+      md5: 0f179259096e85a5d92f40cc6e921a82
+      size: 16549570
+    - path: artifacts_cache/raw/bureau.csv
+      hash: md5
+      md5: 9d3181bb061f78880d8e7f082914d1cd
+      size: 14513935
+    - path: artifacts_cache/raw/bureau_balance.csv
+      hash: md5
+      md5: 8f5c4c203f813f2bedb0f15b8e0df314
+      size: 21492832
+    - path: artifacts_cache/raw/credit_card_balance.csv
+      hash: md5
+      md5: 26ad556b571601ead7206b8cd041c32e
+      size: 35384033
+    - path: artifacts_cache/raw/installments_payments.csv
+      hash: md5
+      md5: 4ca6206724ae2e5a4125bf02c5622d49
+      size: 62478049
+    - path: artifacts_cache/raw/previous_application.csv
+      hash: md5
+      md5: 3658048db94131db3136f3e51e951c32
+      size: 34409132
+  schema_validation:
+    cmd: python -m engine.stages.stage_schema_validation
+    deps:
+    - path: artifacts_cache/raw/application_train.csv
+      hash: md5
+      md5: 0f179259096e85a5d92f40cc6e921a82
+      size: 16549570
+    - path: engine/stages/stage_schema_validation.py
+      hash: md5
+      md5: 8a28c2643fd1861be8c06258d1a74cab
+      size: 4243
+    - path: params.yaml
+      hash: md5
+      md5: 0fa77185bd606bab4ff57fbab9ca3f1d
+      size: 1279
+    outs:
+    - path: artifacts_cache/validation/schema_status.yaml
+      hash: md5
+      md5: 5a3ace29a10da8d43d76a820af538916
+      size: 571
+  feature_engineering:
+    cmd: python -m engine.stages.stage_feature_engineering
+    deps:
+    - path: artifacts_cache/raw/application_train.csv
+      hash: md5
+      md5: 0f179259096e85a5d92f40cc6e921a82
+      size: 16549570
+    - path: engine/stages/stage_feature_engineering.py
+      hash: md5
+      md5: d2d6e44c093957f21c88a38f880a44c7
+      size: 11523
+    - path: params.yaml
+      hash: md5
+      md5: 0fa77185bd606bab4ff57fbab9ca3f1d
+      size: 1279
+    outs:
+    - path: artifacts_cache/engineered/engineered_features.parquet
+      hash: md5
+      md5: 24f28907bbb5b409a7c612a884bbd96c
+      size: 4455785
+  quality_filtration:
+    cmd: python -m engine.stages.stage_quality_filtration
+    deps:
+    - path: artifacts_cache/engineered/engineered_features.parquet
+      hash: md5
+      md5: 24f28907bbb5b409a7c612a884bbd96c
+      size: 4455785
+    - path: engine/stages/stage_quality_filtration.py
+      hash: md5
+      md5: 95b241a2dc54f976c46e043df6dec038
+      size: 5225
+    - path: params.yaml
+      hash: md5
+      md5: 0fa77185bd606bab4ff57fbab9ca3f1d
+      size: 1279
+    outs:
+    - path: artifacts_cache/filtered/filtered_features.parquet
+      hash: md5
+      md5: 8102df1df3c37caca0b29c490619b30b
+      size: 4439040
+    - path: artifacts_cache/filtered/quality_report.json
+      hash: md5
+      md5: d29a8c04b274f9de44b5b9ac2f743bbb
+      size: 26255
+  woe_mapping:
+    cmd: python -m engine.stages.stage_woe_mapping
+    deps:
+    - path: artifacts_cache/filtered/filtered_features.parquet
+      hash: md5
+      md5: 8102df1df3c37caca0b29c490619b30b
+      size: 4439040
+    - path: engine/stages/stage_woe_mapping.py
+      hash: md5
+      md5: 74102868c396348a4f81d6d71053143d
+      size: 12253
+    - path: params.yaml
+      hash: md5
+      md5: 0fa77185bd606bab4ff57fbab9ca3f1d
+      size: 1279
+    outs:
+    - path: artifacts_cache/woe/iv_report.json
+      hash: md5
+      md5: 1e14c3fb95c9929603242aee5878fe39
+      size: 6046
+    - path: artifacts_cache/woe/test_raw.parquet
+      hash: md5
+      md5: 40dba4ebd53e56400742e3c242e0173d
+      size: 1085566
+    - path: artifacts_cache/woe/test_woe.parquet
+      hash: md5
+      md5: bc5b4399c7f0a49497bc6b3d9a1261cd
+      size: 249550
+    - path: artifacts_cache/woe/train_woe.parquet
+      hash: md5
+      md5: 868458984a9bf884aabcd647753ceee2
+      size: 847203
+    - path: artifacts_cache/woe/woe_bin_maps.pkl
+      hash: md5
+      md5: 46ca1621bad7ac0a2712ade4f25beaf3
+      size: 33637
+  bin_optimization:
+    cmd: python -m engine.stages.stage_bin_optimization
+    deps:
+    - path: artifacts_cache/woe/iv_report.json
+      hash: md5
+      md5: 1e14c3fb95c9929603242aee5878fe39
+      size: 6046
+    - path: artifacts_cache/woe/test_woe.parquet
+      hash: md5
+      md5: bc5b4399c7f0a49497bc6b3d9a1261cd
+      size: 249550
+    - path: artifacts_cache/woe/train_woe.parquet
+      hash: md5
+      md5: 868458984a9bf884aabcd647753ceee2
+      size: 847203
+    - path: engine/stages/stage_bin_optimization.py
+      hash: md5
+      md5: 3d296064998a5d2fd71d4adf0d16cbe6
+      size: 8248
+    - path: params.yaml
+      hash: md5
+      md5: 0fa77185bd606bab4ff57fbab9ca3f1d
+      size: 1279
+    outs:
+    - path: artifacts_cache/optimized/optimization_report.json
+      hash: md5
+      md5: cbf9bca6428b2c2888a3161a515e2079
+      size: 6841
+    - path: artifacts_cache/optimized/selected_features.pkl
+      hash: md5
+      md5: 97adbba021b04c2f94231c985b7e03b1
+      size: 738
+    - path: artifacts_cache/optimized/test_opt.parquet
+      hash: md5
+      md5: 1c012a2130cefef59b5b664d7ac3026c
+      size: 134491
+    - path: artifacts_cache/optimized/train_opt.parquet
+      hash: md5
+      md5: fd8c52ee347645498903c57a00297d0b
+      size: 471476
+  estimator_training:
+    cmd: python -m engine.stages.stage_estimator_training
+    deps:
+    - path: artifacts_cache/optimized/test_opt.parquet
+      hash: md5
+      md5: 1c012a2130cefef59b5b664d7ac3026c
+      size: 134491
+    - path: artifacts_cache/optimized/train_opt.parquet
+      hash: md5
+      md5: fd8c52ee347645498903c57a00297d0b
+      size: 471476
+    - path: engine/stages/stage_estimator_training.py
+      hash: md5
+      md5: ba24007ac5c09bd224c6561dbf5b72cb
+      size: 6220
+    - path: params.yaml
+      hash: md5
+      md5: 0fa77185bd606bab4ff57fbab9ca3f1d
+      size: 1279
+    outs:
+    - path: artifacts_cache/model/calibrated_model.pkl
+      hash: md5
+      md5: 92688717109094be377066fb79ca1462
+      size: 4674
+    - path: artifacts_cache/model/feature_importance.csv
+      hash: md5
+      md5: 843e69f853fc460355c26e829153b8e1
+      size: 1436
+    - path: artifacts_cache/model/logistic_regression_model.pkl
+      hash: md5
+      md5: 8cff4b7dcc5d47f372bb83835defcb24
+      size: 1803
+  performance_evaluation:
+    cmd: python -m engine.stages.stage_performance_evaluation
+    deps:
+    - path: artifacts_cache/model/calibrated_model.pkl
+      hash: md5
+      md5: 92688717109094be377066fb79ca1462
+      size: 4674
+    - path: artifacts_cache/optimized/test_opt.parquet
+      hash: md5
+      md5: 1c012a2130cefef59b5b664d7ac3026c
+      size: 134491
+    - path: artifacts_cache/optimized/train_opt.parquet
+      hash: md5
+      md5: fd8c52ee347645498903c57a00297d0b
+      size: 471476
+    - path: engine/stages/stage_performance_evaluation.py
+      hash: md5
+      md5: 15c6607f06d5cc44e22bfb8c67ad1277
+      size: 4895
+    - path: params.yaml
+      hash: md5
+      md5: 0fa77185bd606bab4ff57fbab9ca3f1d
+      size: 1279
+    outs:
+    - path: artifacts_cache/evaluation/metrics.json
+      hash: md5
+      md5: 37b014215b6e94a399038bd38ffa5228
+      size: 213
+  scorecard_scaling:
+    cmd: python -m engine.stages.stage_scorecard_scaling
+    deps:
+    - path: artifacts_cache/model/logistic_regression_model.pkl
+      hash: md5
+      md5: 8cff4b7dcc5d47f372bb83835defcb24
+      size: 1803
+    - path: artifacts_cache/optimized/selected_features.pkl
+      hash: md5
+      md5: 97adbba021b04c2f94231c985b7e03b1
+      size: 738
+    - path: artifacts_cache/woe/woe_bin_maps.pkl
+      hash: md5
+      md5: 46ca1621bad7ac0a2712ade4f25beaf3
+      size: 33637
+    - path: engine/stages/stage_scorecard_scaling.py
+      hash: md5
+      md5: 33bc9d4ed2ce6b8cd88a6368979a0695
+      size: 7078
+    - path: params.yaml
+      hash: md5
+      md5: 0fa77185bd606bab4ff57fbab9ca3f1d
+      size: 1279
+    outs:
+    - path: api/assets/categorical_points_map.pkl
+      hash: md5
+      md5: a1115518936ffc430b73e689065fc81a
+      size: 2278
+    - path: api/assets/numerical_points_map.pkl
+      hash: md5
+      md5: ea2ed6e636fe7ca214164a786910cc4b
+      size: 6454
+    - path: api/assets/scaling_metadata.json
+      hash: md5
+      md5: aa748d89f4c3f7ac4419382be0e0423c
+      size: 247882

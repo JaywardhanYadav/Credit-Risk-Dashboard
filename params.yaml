@@ -1,0 +1,47 @@
+data:
+  raw_dir: "home-credit-default-risk"
+  raw_cache_dir: "artifacts_cache/raw"
+  sample_fraction: 0.1  # Set to 1.0 for full data training
+  random_state: 42
+
+schema_validation:
+  status_file: "artifacts_cache/validation/schema_status.yaml"
+
+feature_engineering:
+  output_file: "artifacts_cache/engineered/engineered_features.parquet"
+
+quality_filtration:
+  max_null_rate: 0.95
+  output_file: "artifacts_cache/filtered/filtered_features.parquet"
+  report_file: "artifacts_cache/filtered/quality_report.json"
+
+woe_mapping:
+  test_size: 0.2
+  min_iv: 0.02
+  output_dir: "artifacts_cache/woe"
+
+bin_optimization:
+  max_correlation: 0.7
+  max_vif: 5.0
+  max_psi: 0.25
+  output_dir: "artifacts_cache/optimized"
+
+estimator_training:
+  penalty: "l2"
+  C: 0.1
+  solver: "lbfgs"
+  max_iter: 1000
+  model_output: "artifacts_cache/model/logistic_regression_model.pkl"
+  calibrated_model_output: "artifacts_cache/model/calibrated_model.pkl"
+
+performance_evaluation:
+  metrics_output: "artifacts_cache/evaluation/metrics.json"
+
+scorecard_scaling:
+  base_score: 600
+  base_odds: 50.0
+  pdo: 20
+  cutoff: 725
+  numerical_points_map: "api/assets/numerical_points_map.pkl"
+  categorical_points_map: "api/assets/categorical_points_map.pkl"
+  metadata_output: "api/assets/scaling_metadata.json"
